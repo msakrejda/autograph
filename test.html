@@ -1,0 +1,89 @@
+<html>
+  <head>
+    <title>d3 test</title>
+    <script type="text/javascript" src="./d3-v2.8.1.js"></script>
+    <script type="text/javascript" src="./jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="./autograph.js"></script>
+    <style type="text/css">
+        .chart rect {
+            fill: steelblue;
+            stroke: white;
+        }
+    </style>
+  </head>
+  <body>
+    <div>
+      <input id="update-data" type="checkbox"/>Update data
+    </div>
+    <div id="chart-container"/>
+    <script type="text/javascript">
+      var updateData = false;
+
+      $(document).ready(function() {
+          $("#update-data").change(function(event) {
+              updateData = event.target.checked;
+          });
+      });
+
+      var t = 1297110663, // start time (seconds since epoch)
+          v = 70; // start value (subscribers)
+
+      // Simple data generation function
+      function next() {
+          return {
+              time: ++t,
+              value: v = ~~Math.max(10, Math.min(90, v + 10 * (Math.random() - .5)))
+          };
+      }
+
+      var data = d3.range(33).map(next); // starting dataset
+
+      var w = 400, h = 80;
+
+      var chart = d3.select("#chart-container").append("svg")
+          .attr("class", "chart")
+          .attr("width", w)
+          .attr("height", h);
+
+      function redraw() {
+          window.console.log('refreshing');
+
+          var x = buildXScale(data, 'time', [0, w]);
+          var y = buildYScale(data, 'value', [0, h]);
+
+          var rect = chart.selectAll("rect")
+              .data(data, function(d) { return d.time; });
+ 
+          // Enter...
+          rect.enter().insert("rect", "line")
+              .attr("x", function(d) { return x(d.time) - .5; })
+              .attr("y", function(d) { return h - y(d.value) - .5; })
+              .attr("width", function(d) { return w / data.length - 3; })
+              .attr("height", function(d) { return y(d.value); });
+ 
+          // Update... N.B.: we reposition and resize as axes may have changed
+          rect.transition()
+              .duration(1000)
+              .attr("x", function(d) { return x(d.time) - .5; })
+              .attr("y", function(d) { return h - y(d.value) - .5; })
+              .attr("height", function(d) { return y(d.value); });
+ 
+          // Exit...
+          rect.exit()
+              .remove();
+      };
+
+      redraw();
+
+      setInterval(function() {
+          if (updateData) {
+              window.console.log('updating data');
+              data.shift();
+              data.push(next());
+              redraw();
+          }
+      }, 1500);
+
+    </script>
+  </body>
+</html>
