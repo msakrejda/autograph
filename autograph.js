@@ -19,16 +19,19 @@ function ofField(field) {
     };
 }
 
-function buildXScale(data, field, range) {
-    return d3.scale.linear()
-        .domain(d3.extent(data, ofField(field)))
-        .range(range);
+function getDomain(data, field) {
+    // TODO: we may want this to be more sophisticated and take the
+    // previous domain (if any) into account to allow for smoother
+    // scale transitions with dynamic data
+    return d3.extent(data, ofField(field));
 }
 
-function buildYScale(data, field, range) {
-    return d3.scale.linear()
-        .domain(d3.extent(data, ofField(field)))
-        .rangeRound(range);
+function getScale(domain, rounded) {
+    var scale = d3.scale.linear().domain(domain);
+    if (rounded) {
+	scale.nice();
+    }
+    return scale;
 }
 
 function createBarChart(specline, metadata, data) {

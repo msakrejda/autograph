@@ -46,30 +46,37 @@
           .attr("height", h);
 
       function redraw() {
-          window.console.log('refreshing');
+          var xScale = getScale(getDomain(data, 'time'));
+          var yScale = getScale(getDomain(data, 'value'), true);
 
-          var x = buildXScale(data, 'time', [0, w]);
-          var y = buildYScale(data, 'value', [0, h]);
+          var x = xScale.range([0, w]);
+          var y = yScale.range([0, h]);
+
+          var xFn = function(d) { return x(d.time) - .5; };
+          var yFn = function(d) { return h - y(d.value) - .5; };
+
+          var wFn = function(d) { return w / data.length - 3; };
+          var hFn = function(d) { return y(d.value); };
+
 
           var rect = chart.selectAll("rect")
               .data(data, function(d) { return d.time; });
- 
+
           // Enter...
           rect.enter().insert("rect", "line")
-              .attr("x", function(d) { return x(d.time) - .5; })
-              .attr("y", function(d) { return h - y(d.value) - .5; })
-              .attr("width", function(d) { return w / data.length - 3; })
-              .attr("height", function(d) { return y(d.value); });
+              .attr("x", xFn).attr("y", yFn)
+              .attr("width", wFn).attr("height", hFn);
  
           // Update... N.B.: we reposition and resize as axes may have changed
           rect.transition()
               .duration(1000)
-              .attr("x", function(d) { return x(d.time) - .5; })
-              .attr("y", function(d) { return h - y(d.value) - .5; })
-              .attr("height", function(d) { return y(d.value); });
+              .attr("x", xFn).attr("y", yFn).attr("height", hFn);
  
           // Exit...
           rect.exit()
+              .transition()
+              .duration(1000)
+              .attr("x", xFn).attr("y", yFn).attr("height", hFn)
               .remove();
       };
 
@@ -77,7 +84,6 @@
 
       setInterval(function() {
           if (updateData) {
-              window.console.log('updating data');
               data.shift();
               data.push(next());
               redraw();
